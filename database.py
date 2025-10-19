@@ -9,7 +9,24 @@ def create_tables():
         cursor.execute("""
 CREATE TABLE IF NOT EXISTS users ( 
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    first_name TEXT NOT NULL CHECK (first_name <> ')                     
+    first_name TEXT NOT NULL CHECK (first_name <> ') 
+    last_name TEXT NOT NULL CHECK (last_name <> ''),
+    email TEXT NOT NULL UNIQUE CHECK (email <> ''),
+    username TEXT NOT NULL UNIQUE CHECK (username <> ''),
+    password_hash TEXT NOT NULL CHECK (password_hash <> ''),        
+    balance REAL DEFAULT 0.0,                    
 ) 
 """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        amount REAL NOT NULL,
+        details TEXT,
+        timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        );               
+        """)        
 
