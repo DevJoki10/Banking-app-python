@@ -4,6 +4,18 @@
 🔐 Stage 2 — User Registration & Authentication
 Added secure user registration and login system. Integrated SHA-256 password hashing, input validation, and login retry limit with 30-sec lockout.
 
+Stage 3: Account model & DB updates
 
+- Introduced `BankUser` class to represent a logged-in user and centralize account operations:
+  - `update_balance_in_db()` — persists in-memory balance to the users table.
+  - `record_transaction(amount, t_type="deposit")` — inserts timestamped transaction rows into transactions table.
+
+- Updated `database.py` table definitions to better support transaction history (timestamp field and integer amount storage).
+- These changes prepare the app for deposit, withdrawal, and transfer flows (Stage 4).
+
+💰 Stage 4 — Deposit, Withdrawal & Balance Inquiry
+
+🧾 Description:
+Implemented deposit and withdrawal features with real-time balance updates. Added balance inquiry for users to view current account funds safely.
 
 

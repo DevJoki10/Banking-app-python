@@ -169,8 +169,62 @@ def log_in():
         return None
         
 
+class BankUser:         
+    def __init__(self,user_id,first_name,last_name,balance):
+        self.user_id = user_id  
+        self.first_name = first_name
+        self.last_name = last_name
+        self.balance = balance  
+
+    def update_balance_in_db(self):
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET balance = ? WHERE id = ?", (self.balance, self.user_id))
+            conn.commit()
+
+    def record_transaction(self, amount, t_type="deposit"):
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO transactions (user_id, type, amount, timestamp)
+                VALUES (?, ?, ?, ?)
+            """, (self.user_id, t_type, amount, timestamp))
+            conn.commit()    
 
 
+def deposit(self):
+            try:
+                amount = float(input("Input amount you wanna deposit: "))
+                if amount <= 0:
+                    print("Amount must not be less than zero")
+                    return
+                self.balance += amount
+                self.update_balance_in_db()
+                self.record_transaction(amount)
+                print(f"Deposit successful! New balance: ₦{self.balance:.2f}")  
+            except ValueError:
+                print("Invalid amount . Please make sure amout entered is a valid number")    
+        
+
+    def withdraw(self):
+        try:
+            amount = float(input("Input amount you wanna withdraw: "))
+            if amount <= 0:
+                print("Amount must not be less than zero")
+                return
+            if amount > self.balance:
+                print("Insufficient Funds")
+
+            self.balance -= amount
+            self.update_balance_in_db()
+            with sqlite3.connect(DB_FILE) as conn :
+                cursor = conn.cursor()
+                cursor.execute("""INSERT INTO transactions(user_id,type,amount
+                            VALUES(?,?,?)""" ,(self.user_id,"withdrawal", amount))
+                conn.commit()
+                print(f"Withdrawal successful! New balance: ₦{self.balance:.2f}")
+        except ValueError: print("Invalid amount . Please make sure amout entered is a valid number")
 
 def main_menu ():
     current_user = None
