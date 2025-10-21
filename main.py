@@ -193,18 +193,18 @@ class BankUser:
             conn.commit()    
 
 
-def deposit(self):
-            try:
-                amount = float(input("Input amount you wanna deposit: "))
-                if amount <= 0:
-                    print("Amount must not be less than zero")
-                    return
-                self.balance += amount
-                self.update_balance_in_db()
-                self.record_transaction(amount)
-                print(f"Deposit successful! New balance: ₦{self.balance:.2f}")  
-            except ValueError:
-                print("Invalid amount . Please make sure amout entered is a valid number")    
+    def deposit(self):
+                try:
+                    amount = float(input("Input amount you wanna deposit: "))
+                    if amount <= 0:
+                        print("Amount must not be less than zero")
+                        return
+                    self.balance += amount
+                    self.update_balance_in_db()
+                    self.record_transaction(amount)
+                    print(f"Deposit successful! New balance: ₦{self.balance:.2f}")  
+                except ValueError:
+                    print("Invalid amount . Please make sure amout entered is a valid number")    
         
 
     def withdraw(self):
@@ -226,6 +226,39 @@ def deposit(self):
                 print(f"Withdrawal successful! New balance: ₦{self.balance:.2f}")
         except ValueError: print("Invalid amount . Please make sure amout entered is a valid number")
 
+
+    def check_balance(self):
+        print(f"Your current balance is: ₦{self.balance:.2f}")
+
+
+    
+    def view_transaction_history(self):
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT type, amount, timestamp FROM transactions
+                WHERE user_id = ?
+                ORDER BY timestamp DESC
+            """, (self.user_id,))
+            transactions = cursor.fetchall()
+            
+        print("=======================================================================")
+        print(f"      TRANSACTION HISTORY for {self.first_name} {self.last_name}")    
+        print("=======================================================================")
+
+        if not transactions:
+            print("You have not made any transaction. Your transaction history is empty")
+            print("=======================================================================")
+            return
+        print(f"{'DATE':<22} {'TYPE':<12} {'AMOUNT (₦)':>12}")
+        print("=======================================================================")
+        for t_type, amount, date in transactions:
+            print(f"{date:<22} {t_type.title():<12} ₦{amount:>10,.2f}")
+
+        print("=======================================================================")
+        print(f"Current balance. : ₦{self.balance:,.2f}")
+        print("=======================================================================")
+    
 def main_menu ():
     current_user = None
     while True:

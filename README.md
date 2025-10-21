@@ -14,8 +14,8 @@ Stage 3: Account model & DB updates
 - These changes prepare the app for deposit, withdrawal, and transfer flows (Stage 4).
 
 💰 Stage 4 — Deposit, Withdrawal & Balance Inquiry
-
-🧾 Description:
 Implemented deposit and withdrawal features with real-time balance updates. Added balance inquiry for users to view current account funds safely.
 
 
+📜 Stage 4 — Transaction History Tracking
+Created transaction logging for every deposit and withdrawal. Added view_transaction_history() to display detailed past transactions with timestamps.
