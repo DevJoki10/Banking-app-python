@@ -1,12 +1,11 @@
 import re
 import sqlite3
 import hashlib
-
-
-
-
+import time
+import random
 from database import create_tables
 from getpass import getpass
+
 
 DB_FILE = "joki_bank.db"
 create_tables()
@@ -18,7 +17,7 @@ def check_tables():
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         print(cursor.fetchall())
 
-check_tables()
+# check_tables()
 
 def register_user():
     print("************************USER REGISTRATION**************************")
@@ -119,3 +118,80 @@ def register_user():
     print(f"\nRegistration successful! ")
     print(f"Your new account number is: {account_number}")
     print("Please keep your password and PIN safe.\n")
+
+def log_in():
+    print("************************LOG IN**************************")  
+    max_attempts = 3
+    failed_attempts = 0  
+    while True:
+        username_or_email = input("Enter your username/ Email address").strip()
+        if not username_or_email:
+            print("Username/ Email address field cannot be empty")
+            continue
+        break 
+
+    while True:
+        password = getpass("Enter your password: ").strip()
+        if not password :
+            print("Password field cannot be blank")  
+            continue
+        break
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
+    email_pattern =  r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+    if re.match(email_pattern,username_or_email):
+        query = "SELECT * FROM users WHERE email = ? and password = ?"
+    else:
+        query = "SELECT * FROM users WHERE username = ? and password = ?"
+
+    with sqlite3.connect(DB_FILE) as conn:
+        cursor = conn.cursor()        
+        cursor.execute(query,(username_or_email,hashed_password))
+        user = cursor.fetchone()
+
+    if user :
+        print(f"Login successful. Hi {user[1]} {user[2]} ") 
+        current_user = BankUser(user[0], user[1], user[2], user[6])
+        return current_user
+    else:
+            failed_attempts += 1
+            remaining = max_attempts - failed_attempts
+            print(f"\n Invalid Username/Email or Password. Attempts left: {remaining}")
+
+            if failed_attempts >= max_attempts:
+                print("Too many failed attempts. Please wait 30 seconds before trying again.\n")
+                time.sleep(30)
+                failed_attempts = 0  
+
+        # Ask user if they want to try again or quit login
+    retry = input("Do you want to try again? (y/n): ").strip().lower()
+    if retry != 'y':
+        print("Returning to main menu...\n")
+        return None
+        
+
+
+
+
+def main_menu ():
+    current_user = None
+    while True:
+        print ("""
+ ==============================
+    JOKI TERMINAL BANK
+ ==============================                 
+1. Register
+2. Log In
+3. Deposit
+4. Withdrawal
+5. Balance Inquiry
+6. Transaction History
+7. Transfer
+8.Account details            
+9.Exit                                                                             
+""") 
+        choice = input("Select an option (1-9): ").strip()
+
+        if choice == "1":
+            register_user()
+        elif choice == "2":
+           current_user = log_in()        
