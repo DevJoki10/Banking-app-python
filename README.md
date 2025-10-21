@@ -17,5 +17,5 @@ Stage 3: Account model & DB updates
 Implemented deposit and withdrawal features with real-time balance updates. Added balance inquiry for users to view current account funds safely.
 
 
-📜 Stage 4 — Transaction History Tracking
+📜 Stage 5 — Transaction History Tracking
 Created transaction logging for every deposit and withdrawal. Added view_transaction_history() to display detailed past transactions with timestamps.
