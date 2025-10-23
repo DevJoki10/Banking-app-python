@@ -21,10 +21,10 @@ Implemented deposit and withdrawal features with real-time balance updates. Adde
 Created transaction logging for every deposit and withdrawal. Added view_transaction_history() to display detailed past transactions with timestamps.
 <<<<<<< HEAD
 
-Stage 6 —  Refactors the codebase for modularity also introduces core banking operations.
+
+📜 Stage 6 —  Refactors the codebase for modularity also introduces core banking operations.
 - Moved registration and login functions into the helpers.py
 - Transfers now include PIN authentication, daily limit checks, transaction logs, and database-safe commits with rollback on error.
 Improved balance display, user feedback, and concurrency handling.
 
-=======
->>>>>>> 5f51e501143b880d75a2fc0d18a6522162341cb9
+
