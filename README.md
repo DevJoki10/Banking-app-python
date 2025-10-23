@@ -17,5 +17,11 @@ Stage 3: Account model & DB updates
 Implemented deposit and withdrawal features with real-time balance updates. Added balance inquiry for users to view current account funds safely.
 
 
-📜 Stage 4 — Transaction History Tracking
+📜 Stage 5 — Transaction History Tracking
 Created transaction logging for every deposit and withdrawal. Added view_transaction_history() to display detailed past transactions with timestamps.
+
+Stage 6 —  Refactors the codebase for modularity also introduces core banking operations.
+- Moved registration and login functions into the helpers.py
+- Transfers now include PIN authentication, daily limit checks, transaction logs, and database-safe commits with rollback on error.
+Improved balance display, user feedback, and concurrency handling.
+

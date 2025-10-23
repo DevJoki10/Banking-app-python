@@ -1,10 +1,9 @@
 import re
 import sqlite3
-import hashlib
 import time
-import random
 from database import create_tables
 from getpass import getpass
+from helpers import hash_password, hash_pin, validate_email, generate_account_number
 
 
 DB_FILE = "joki_bank.db"
@@ -56,8 +55,7 @@ def register_user():
         if not email:
             print("Email field cannot be blank")
             continue
-        email_pattern =  r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
-        if not re.match(email_pattern,email):
+        if not validate_email(email):
             print("Invalid Email Address") 
             continue
         with sqlite3.connect(DB_FILE) as conn:
@@ -82,8 +80,7 @@ def register_user():
             print("Passwords do not match")
             continue
         break
-    hashed_password = hashlib.sha256(password1.encode()).hexdigest()
-
+    hashed_password = hash_password(password1)
    
     while True:
         pin = getpass("Set a 4-digit transaction PIN: ").strip()
@@ -95,17 +92,14 @@ def register_user():
             print("PINs do not match.")
             continue
         break
-    hashed_pin = hashlib.sha256(pin.encode()).hexdigest()
+    hashed_pin = hash_pin(pin)
     
 
-    
-    while True:
-        account_number = str(random.randint(1000000000, 9999999999))
-        with sqlite3.connect(DB_FILE) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE account_number = ?", (account_number,))
-            if not cursor.fetchone():  
-                break
+    with sqlite3.connect(DB_FILE) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT account_number FROM users")
+        existing_accounts  = [row[0] for row in cursor.fetchall()]
+    account_number = generate_account_number( existing_accounts )
 
     with sqlite3.connect(DB_FILE) as conn:
         cursor = conn.cursor()
@@ -114,6 +108,7 @@ def register_user():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (first_name, last_name, email, username, hashed_password, hashed_pin, account_number, 0))
         conn.commit()
+    
 
     print(f"\nRegistration successful! ")
     print(f"Your new account number is: {account_number}")
@@ -136,33 +131,30 @@ def log_in():
             print("Password field cannot be blank")  
             continue
         break
-    hashed_password = hashlib.sha256(password.encode()).hexdigest()
-    email_pattern =  r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
-    if re.match(email_pattern,username_or_email):
-        query = "SELECT * FROM users WHERE email = ? and password = ?"
-    else:
-        query = "SELECT * FROM users WHERE username = ? and password = ?"
+    hashed_password =  hash_password(password)
+    query = ("SELECT * FROM users WHERE email = ? and password = ?"
+             if validate_email(username_or_email)
+             else "SELECT * FROM users WHERE username = ? and password = ?")
 
     with sqlite3.connect(DB_FILE) as conn:
         cursor = conn.cursor()        
-        cursor.execute(query,(username_or_email,hashed_password))
+        cursor.execute(query, (username_or_email, hashed_password))
         user = cursor.fetchone()
 
-    if user :
+    if user:
         print(f"Login successful. Hi {user[1]} {user[2]} ") 
-        current_user = BankUser(user[0], user[1], user[2], user[6])
+        current_user = BankUser(user[0], user[1], user[2], user[8])
         return current_user
     else:
-            failed_attempts += 1
-            remaining = max_attempts - failed_attempts
-            print(f"\n Invalid Username/Email or Password. Attempts left: {remaining}")
+        failed_attempts += 1
+        remaining = max_attempts - failed_attempts
+        print(f"\nInvalid Username/Email or Password. Attempts left: {remaining}")
 
-            if failed_attempts >= max_attempts:
-                print("Too many failed attempts. Please wait 30 seconds before trying again.\n")
-                time.sleep(30)
-                failed_attempts = 0  
+        if failed_attempts >= max_attempts:
+            print("Too many failed attempts. Please wait 30 seconds before trying again.\n")
+            time.sleep(30)
+            failed_attempts = 0  
 
-        # Ask user if they want to try again or quit login
     retry = input("Do you want to try again? (y/n): ").strip().lower()
     if retry != 'y':
         print("Returning to main menu...\n")
@@ -215,12 +207,13 @@ class BankUser:
                 return
             if amount > self.balance:
                 print("Insufficient Funds")
+                return
 
             self.balance -= amount
             self.update_balance_in_db()
             with sqlite3.connect(DB_FILE) as conn :
                 cursor = conn.cursor()
-                cursor.execute("""INSERT INTO transactions(user_id,type,amount
+                cursor.execute("""INSERT INTO transactions(user_id,type,amount, timestamp)
                             VALUES(?,?,?)""" ,(self.user_id,"withdrawal", amount))
                 conn.commit()
                 print(f"Withdrawal successful! New balance: ₦{self.balance:.2f}")
@@ -281,4 +274,29 @@ def main_menu ():
         if choice == "1":
             register_user()
         elif choice == "2":
-           current_user = log_in()        
+           current_user = log_in()
+        elif choice == "3":
+            if current_user:
+                current_user.deposit()
+            else:
+                print("You must log in first.")
+        elif choice == "4":
+            if current_user: 
+                current_user.withdraw()
+            else:
+                print("You must log in first.")
+        elif choice == "5":
+            if current_user: 
+                current_user.check_balance()
+            else:
+                print("You must log in first.")                
+        elif choice == "6":
+            if current_user:
+                current_user.view_transaction_history()
+            else:
+                print("You must log in first.")
+        elif choice == "9":
+            print("Thank you for using JOKI Terminal Bank. Goodbye!")
+            break
+        else:
+            print("Invalid choice, please select 1-9")           
