@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joki Terminal Bank</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: sans-serif;
+        }
+
+        .iphone-frame {
+            position: relative;
+            width: 393px;
+            height: 852px;
+            background-color: #000;
+            border-radius: 60px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 10px solid #000;
+        }
+
+        .iphone-frame::before {
+            content: '';
+            position: absolute;
+            top: 150px;
+            left: -10px;
+            width: 3px;
+            height: 50px;
+            background-color: #ccc;
+            border-radius: 2px 0 0 2px;
+        }
+
+        .iphone-frame::after {
+            content: '';
+            position: absolute;
+            top: 250px;
+            left: -10px;
+            width: 3px;
+            height: 80px;
+            background-color: #ccc;
+            border-radius: 2px 0 0 2px;
+        }
+
+        .dynamic-island {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 30px;
+            background-color: #000;
+            border-radius: 20px;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background-color: #121212;
+            color: #fff;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 20px;
+            font-size: 12px;
+            background-color: #121212;
+        }
+
+        .status-left, .status-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-right span {
+            margin-left: 5px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #121212;
+        }
+
+        .greeting {
+            display: flex;
+            align-items: center;
+        }
+
+        .greeting img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: #00b3a6;
+        }
+
+        .balance-section {
+            background-color: #00b3a6;
+            margin: 15px;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .balance-info {
+            flex: 1;
+        }
+
+        .balance-title {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .balance-amount {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #1e1e1e;
+            margin: 10px 15px;
+            border-radius: 10px;
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            color: #00b3a6;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            gap: 10px;
+        }
+
+        .action-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #00b3a6;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            width: 90%;
+            max-width: 350px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #333;
+            background-color: #121212;
+            color: white;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .modal-button {
+            padding: 8px 16px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .confirm-button {
+            background-color: #00b3a6;
+            color: white;
+        }
+
+        .cancel-button {
+            background-color: #333;
+            color: white;
+        }
+
+        #alertMessage {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1001;
+            display: none;
+        }
+
+        .success-alert {
+            background-color: #00b3a6;
+            color: white;
+        }
+
+        .error-alert {
+            background-color: #ff4444;
+            color: white;
+        }
+        /* Fix for iPhone frame and bottom nav */
+        .iphone-frame {
+            position: relative;
+            width: 393px;
+            height: 852px;
+            background-color: #000;
+            border-radius: 60px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 10px solid #000;
+            margin: auto;
+        }
+
+        .dynamic-island {
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 32px;
+            background-color: #222;
+            border-radius: 20px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        /* Bottom Navigation Styles */
+        .bottom-nav {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: #1e1e1e;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            border-radius: 0 0 50px 50px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #888;
+            text-decoration: none;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            color: #00b3a6;
+        }
+
+        .nav-item.active {
+            color: #00b3a6;
+            background-color: rgba(0, 179, 166, 0.1);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+        }
+
+        /* Add bottom padding to main content to prevent overlap with nav */
+        .screen {
+            padding-bottom: 70px;
+        }
+    </style>
+</head>
+<body>
+    <div class="iphone-frame">
+        <div class="dynamic-island">Joki Bank</div>
+        <div class="screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-left">
+                    <span id="clock">11:27 AM</span>
+                    <span style="margin-left: 5px;">📡</span>
+                </div>
+                <div class="status-right">
+                    <span>📶</span>
+                    <span>🔋 95%</span>
+                </div>
+            </div>
+
+            <!-- App Header -->
+            <div class="app-header">
+                <div class="greeting">
+                    <img src="" alt="J">
+                    <span>Welcome, {{ user[1] }}</span>
+                </div>
+            </div>
+
+            <!-- Balance Section -->
+            <div class="balance-section">
+                <div class="balance-info">
+                    <div class="balance-title">
+                        <span>✔️ Available Balance</span>
+                    </div>
+                    <div class="balance-amount" id="balance">₦{{ "%.2f"|format(user[8]) }}</div>
+                    <div style="font-size:13px;color:#fff;background:#222;padding:4px 10px;border-radius:8px;margin-top:6px;display:inline-block;letter-spacing:1px;">
+                        <span style="opacity:0.7;">Acct No:</span> <b>{{ user[7] }}</b>
+                    </div>
+                </div>
+                <button class="action-button" onclick="showModal('deposit')">
+                    <div class="action-icon">💰</div>
+                    Deposit
+                </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="action-button" onclick="showModal('withdraw')">
+                    <div class="action-icon">📤</div>
+                    Withdraw
+                </button>
+                <button class="action-button" onclick="showModal('transfer')">
+                    <div class="action-icon">↗️</div>
+                    Transfer
+                </button>
+            </div>
+
+            <!-- Transaction History -->
+            <div id="transactionHistory">
+                {% if transactions %}
+                    {% for tx in transactions %}
+                    <div class="transaction-item">
+                        <div class="item-left">
+                            <div class="item-icon">
+                                {% if tx[0] == 'deposit' %}💰
+                                {% elif tx[0] == 'withdraw' %}📤
+                                {% else %}↗️{% endif %}
+                            </div>
+                            <div class="item-details">
+                                <div class="item-title">{{ tx[0]|title }}</div>
+                                <div class="item-date">{{ tx[2] }}</div>
+                                {% if tx[3] %}<div class="item-date">{{ tx[3] }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="item-amount {% if tx[0] in ['deposit', 'transfer_in'] %}success{% endif %}">
+                                {% if tx[0] in ['deposit', 'transfer_in'] %}+{% else %}-{% endif %}₦{{ "%.2f"|format(tx[1]) }}
+                            </div>
+                            <div class="item-status success">Successful</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="transaction-item">
+                        <div class="item-left">
+                            <div class="item-icon">📝</div>
+                            <div class="item-details">
+                                <div class="item-title">No transactions yet</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+    </div>
+
+    <!-- Transaction Modals -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <!-- Deposit Modal -->
+    <div class="modal" id="depositModal">
+        <h3 style="color: white; margin-bottom: 15px;">Deposit Money</h3>
+        <input type="number" id="depositAmount" placeholder="Enter amount" min="0" step="0.01">
+        <div class="modal-buttons">
+            <button class="modal-button cancel-button" onclick="hideModal('deposit')">Cancel</button>
+            <button class="modal-button confirm-button" onclick="handleTransaction('deposit')">Deposit</button>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div class="modal" id="withdrawModal">
+        <h3 style="color: white; margin-bottom: 15px;">Withdraw Money</h3>
+        <input type="number" id="withdrawAmount" placeholder="Enter amount" min="0" step="0.01">
+        <div class="modal-buttons">
+            <button class="modal-button cancel-button" onclick="hideModal('withdraw')">Cancel</button>
+            <button class="modal-button confirm-button" onclick="handleTransaction('withdraw')">Withdraw</button>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div class="modal" id="transferModal">
+        <h3 style="color: white; margin-bottom: 15px;">Transfer Money</h3>
+        <input type="text" id="recipientAccount" placeholder="Recipient Account Number">
+        <input type="number" id="transferAmount" placeholder="Enter amount" min="0" step="0.01">
+        <div class="modal-buttons">
+            <button class="modal-button cancel-button" onclick="hideModal('transfer')">Cancel</button>
+            <button class="modal-button confirm-button" onclick="handleTransaction('transfer')">Transfer</button>
+        </div>
+    </div>
+
+    <!-- Alert Message -->
+    <div id="alertMessage"></div>
+
+    <script>
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+            document.getElementById('clock').textContent = timeStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Modal functions
+        function showModal(type) {
+            document.getElementById(type + 'Modal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+
+        function hideModal(type) {
+            document.getElementById(type + 'Modal').style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+            // Clear inputs
+            document.getElementById(type + 'Amount').value = '';
+            if (type === 'transfer') {
+                document.getElementById('recipientAccount').value = '';
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            alertDiv.className = type === 'error' ? 'error-alert' : 'success-alert';
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'block';
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateBalance(balance) {
+            document.getElementById('balance').textContent = `₦${parseFloat(balance).toFixed(2)}`;
+        }
+
+        function createTransactionElement(tx) {
+            const isIncoming = tx.type === 'deposit' || tx.type === 'transfer_in';
+            const icon = isIncoming ? '💰' : (tx.type === 'withdraw' ? '📤' : '↗️');
+            
+            return `
+                <div class="transaction-item">
+                    <div class="item-left">
+                        <div class="item-icon">${icon}</div>
+                        <div class="item-details">
+                            <div class="item-title">${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}</div>
+                            <div class="item-date">${tx.timestamp}</div>
+                            ${tx.details ? `<div class="item-date">${tx.details}</div>` : ''}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="item-amount ${isIncoming ? 'success' : ''}">${isIncoming ? '+' : '-'}₦${parseFloat(tx.amount).toFixed(2)}</div>
+                        <div class="item-status success">Successful</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateTransactionHistory(transactions) {
+            const historyDiv = document.getElementById('transactionHistory');
+            if (transactions.length === 0) {
+                historyDiv.innerHTML = `
+                    <div class="transaction-item">
+                        <div class="item-left">
+                            <div class="item-icon">📝</div>
+                            <div class="item-details">
+                                <div class="item-title">No transactions yet</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const transactionElements = transactions.map(createTransactionElement);
+            historyDiv.innerHTML = transactionElements.join('');
+        }
+
+        function handleTransaction(type) {
+            let amount = document.getElementById(`${type}Amount`).value;
+            let data = { type, amount: parseFloat(amount) };
+            
+            if (type === 'transfer') {
+                data.recipient_account = document.getElementById('recipientAccount').value;
+                if (!data.recipient_account) {
+                    showAlert('Recipient account is required', 'error');
+                    return;
+                }
+            }
+
+            if (!amount || amount <= 0) {
+                showAlert('Please enter a valid amount', 'error');
+                return;
+            }
+
+            fetch('/transaction', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert(data.error, 'error');
+                } else {
+                    showAlert(data.message, 'success');
+                    updateBalance(data.new_balance);
+                    updateTransactionHistory(data.transactions);
+                    hideModal(type);
+                }
+            })
+            .catch(error => {
+                showAlert('Transaction failed. Please try again.', 'error');
+                console.error('Error:', error);
+            });
+        }
+
+        // Add active class to current nav item
+        function setActiveNavItem(id) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.getElementById(id).classList.add('active');
+        }
+
+        // Initialize the first nav item as active
+        document.addEventListener('DOMContentLoaded', () => {
+            setActiveNavItem('nav-home');
+        });
+    </script>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="#" class="nav-item" id="nav-home" onclick="setActiveNavItem('nav-home')">
+            <div class="nav-icon">🏠</div>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-rewards" onclick="setActiveNavItem('nav-rewards')">
+            <div class="nav-icon">🎁</div>
+            <span class="nav-label">Rewards</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-finance" onclick="setActiveNavItem('nav-finance')">
+            <div class="nav-icon">📈</div>
+            <span class="nav-label">Finance</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-cards" onclick="setActiveNavItem('nav-cards')">
+            <div class="nav-icon">💳</div>
+            <span class="nav-label">Cards</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-me" onclick="setActiveNavItem('nav-me')">
+            <div class="nav-icon">👤</div>
+            <span class="nav-label">Me</span>
+        </a>
+        <a href="{{ url_for('logout') }}" class="nav-item" id="nav-logout" style="color:#ff4444;">
+            <div class="nav-icon">🚪</div>
+            <span class="nav-label">Logout</span>
+        </a>
+    </div>
+</body>
+</html>

@@ -28,3 +28,18 @@ Created transaction logging for every deposit and withdrawal. Added view_transac
 Improved balance display, user feedback, and concurrency handling.
 
 
+
+# iPhone-Style Banking App Mockup
+
+This is a web-based banking app mockup designed to look like an iPhone 16 app. It simulates core banking functionalities inside a single-page container.
+
+## Features
+
+- **Deposit**: Add money to your balance.
+- **Withdraw**: Withdraw money with balance validation.
+- **Transfer**: Send money to a recipient account with balance check.
+- **Transaction History**: See a dynamic list of deposits, withdrawals, and transfers.
+- **iPhone 16 UI**: Fully styled container with header, balance section, action buttons, and bottom navigation.
+
+
+

@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body.bg {
+  background: radial-gradient(circle at top, #003300 0%, #001a00 100%);
+  backdrop-filter: blur(20px);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Poppins', sans-serif;
+  color: white;
+}
+
+.iphone-frame {
+  width: 360px;
+  height: 720px;
+  border: 16px solid #111;
+  border-radius: 40px;
+  box-shadow: 0 0 40px #00ff99aa;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+}
+
+.iphone-frame::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 30px;
+  background: #111;
+  border-radius: 20px;
+}
+
+.screen, .app-container {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(145deg, #003f2e, #001d14);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  animation: fadeIn 1s ease-in-out;
+  padding: 20px;
+}
+
+.bank-dashboard .app-container {
+  justify-content: flex-start;
+  padding-top: 40px;
+}
+
+.account-details {
+  width: 100%;
+  margin: 20px 0;
+  display: grid;
+  gap: 15px;
+}
+
+.detail-card {
+  background: rgba(255,255,255,0.1);
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.detail-card h3 {
+  font-size: 0.9em;
+  color: #00ffcc;
+  margin-bottom: 5px;
+}
+
+.detail-card p {
+  font-size: 1.2em;
+  color: white;
+}
+
+.action-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+  width: 100%;
+}
+
+.logo {
+  font-size: 1.5em;
+  text-align: center;
+  color: #00ffcc;
+  animation: pulse 2s infinite;
+}
+
+.form {
+  padding: 30px;
+  text-align: center;
+}
+
+.form input {
+  width: 85%;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  outline: none;
+}
+
+.form input:invalid {
+  border: 1px solid #ff3366;
+}
+
+.form input:valid {
+  border: 1px solid #00ff99;
+}
+
+.alert {
+  margin: 10px auto;
+  padding: 10px;
+  border-radius: 5px;
+  width: 85%;
+  text-align: center;
+}
+
+.alert-danger {
+  background: rgba(255, 51, 102, 0.2);
+  color: #ff3366;
+  border: 1px solid #ff3366;
+}
+
+.alert-success {
+  background: rgba(0, 255, 153, 0.2);
+  color: #00ff99;
+  border: 1px solid #00ff99;
+}
+
+.alert-info {
+  background: rgba(0, 204, 255, 0.2);
+  color: #00ccff;
+  border: 1px solid #00ccff;
+}
+
+.btn {
+  background: #00ff99;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+}
+
+.btn:hover {
+  background: #00ffaa;
+  box-shadow: 0 0 10px #00ffaa;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid #00ff99;
+  color: #00ff99;
+}
+
+.btn-outline:hover {
+  background: #00ff9922;
+  box-shadow: 0 0 10px #00ff9955;
+}
+
+.btn-danger {
+  background: #ff3366;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #ff4477;
+  box-shadow: 0 0 10px #ff4477;
+}
+
+a {
+  color: #00ffcc;
+  text-decoration: none;
+}
+
+
+
+@keyframes pulse {
+  0%,100% { opacity: 0.8; }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

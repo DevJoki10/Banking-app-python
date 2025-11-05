@@ -1,6 +1,11 @@
 import re
 import sqlite3
 import time
+from time import sleep
+from colorama import Fore, Style, init
+init(autoreset=True)
+import os
+os.system('cls' if os.name == 'nt' else 'clear')
 from database import create_tables
 from getpass import getpass
 from helpers import hash_password, hash_pin, validate_email, generate_account_number
@@ -19,11 +24,11 @@ def check_tables():
 # check_tables()
 
 def register_user():
-    print("************************USER REGISTRATION**************************")
+    print( Fore.CYAN + "************************USER REGISTRATION**************************" + Style.RESET_ALL)
     while True:
         last_name = input("Input your last name: ").strip()
         if not last_name:
-            print("Last name field cannot be blank")
+            print(Fore.LIGHTCYAN_EX + "Last name field cannot be blank"+ Style.RESET_ALL)
             continue
         break 
 
@@ -101,16 +106,43 @@ def register_user():
         existing_accounts  = [row[0] for row in cursor.fetchall()]
     account_number = generate_account_number( existing_accounts )
 
+        # Ask user for initial deposit (must be ≥ 2000)
+    while True:
+        try:
+            initial_deposit = float(input("Enter your initial deposit (₦2000 minimum): "))
+            if initial_deposit < 2000:
+                print("Minimum opening balance is ₦2000.")
+                continue
+            break
+        except ValueError:
+            print("Please enter a valid numeric amount.")
+
+    
     with sqlite3.connect(DB_FILE) as conn:
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO users (first_name, last_name, email, username, password, pin, account_number, balance)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (first_name, last_name, email, username, hashed_password, hashed_pin, account_number, 0))
+        """, (first_name, last_name, email, username, hashed_password, hashed_pin, account_number, initial_deposit))
         conn.commit()
+
+         
+        user_id = cursor.lastrowid
+
+        #  Record the first transaction
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        cursor.execute("""
+            INSERT INTO transactions (user_id, type, amount, timestamp)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, "deposit", initial_deposit, timestamp))
+        conn.commit()
+
+
+       
+
     
 
-    print(f"\nRegistration successful! ")
+    print(Fore.GREEN + "Registration successful!" + Style.RESET_ALL)
     print(f"Your new account number is: {account_number}")
     print("Please keep your password and PIN safe.\n")
 
@@ -197,8 +229,6 @@ class BankUser:
                     print(f"Deposit successful! New balance: ₦{self.balance:.2f}")  
                 except ValueError:
                     print("Invalid amount . Please make sure amout entered is a valid number")    
-        
-
     def withdraw(self):
         try:
             amount = float(input("Input amount you wanna withdraw: "))
@@ -214,14 +244,82 @@ class BankUser:
             with sqlite3.connect(DB_FILE) as conn :
                 cursor = conn.cursor()
                 cursor.execute("""INSERT INTO transactions(user_id,type,amount, timestamp)
-                            VALUES(?,?,?)""" ,(self.user_id,"withdrawal", amount))
+                            VALUES(?,?,?,?)""" ,(self.user_id,"withdrawal", amount))
                 conn.commit()
                 print(f"Withdrawal successful! New balance: ₦{self.balance:.2f}")
         except ValueError: print("Invalid amount . Please make sure amout entered is a valid number")
 
+    def transfer(self):
+        try:
+            receiver_acct = input("Enter recipient account number: ").strip()
+            if not receiver_acct:
+                print("Account number field cannot be blank.")
+                return
+
+            with sqlite3.connect(DB_FILE) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, first_name, last_name FROM users WHERE account_number = ?", (receiver_acct,))
+                receiver = cursor.fetchone()
+
+            if not receiver:
+                print("Recipient account not found.")
+                return
+
+            amount = float(input("Enter amount to transfer: "))
+            if amount <= 0:
+                print("Transfer amount must be greater than zero.")
+                return
+            if amount > self.balance:
+                print("Insufficient funds for this transfer.")
+                return
+
+            confirm = input(f"Confirm transfer of ₦{amount:,.2f} to {receiver[1]} {receiver[2]}? (y/n): ").strip().lower()
+            if confirm != 'y':
+                print("Transfer cancelled.")
+                return
+
+            
+            self.balance -= amount
+            self.update_balance_in_db()
+            self.record_transaction(amount, "transfer_out")
+
+            
+            with sqlite3.connect(DB_FILE) as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (amount, receiver[0]))
+                cursor.execute("""
+                    INSERT INTO transactions (user_id, type, amount, timestamp)
+                    VALUES (?, ?, ?, ?)
+                """, (receiver[0], "transfer_in", amount, time.strftime("%Y-%m-%d %H:%M:%S")))
+                conn.commit()
+
+            print(f"Transfer successful! ₦{amount:,.2f} sent to {receiver[1]} {receiver[2]}.")
+            print(f"New Balance: ₦{self.balance:,.2f}")
+
+        except ValueError:
+            print("Invalid amount. Please enter a valid number.")                
+        
+
+
 
     def check_balance(self):
         print(f"Your current balance is: ₦{self.balance:.2f}")
+
+
+    def view_account_details(self):
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT account_number, email, username FROM users WHERE id = ?", (self.user_id,))
+            details = cursor.fetchone()
+
+        print("\n================== ACCOUNT DETAILS ==================")
+        print(f"Name: {self.first_name} {self.last_name}")
+        print(f"Username: {details[2]}")
+        print(f"Email: {details[1]}")
+        print(f"Account Number: {details[0]}")
+        print(f"Current Balance: ₦{self.balance:,.2f}")
+        print("=====================================================\n")
+
 
 
     
@@ -267,7 +365,7 @@ def main_menu ():
 6. Transaction History
 7. Transfer
 8.Account details            
-9.Exit                                                                             
+9. Exit                                                                             
 """) 
         choice = input("Select an option (1-9): ").strip()
 
@@ -295,8 +393,23 @@ def main_menu ():
                 current_user.view_transaction_history()
             else:
                 print("You must log in first.")
+        elif choice == "7":
+            if current_user:
+                current_user.transfer()
+            else:
+                print("You must log in first.")
+        elif choice == "8":
+            if current_user:
+                current_user.view_account_details()
+            else:
+             print("You must log in first.")        
         elif choice == "9":
-            print("Thank you for using JOKI Terminal Bank. Goodbye!")
+            print(Fore.CYAN + "Thank you for using JOKI Terminal Bank. Goodbye!" + Style.RESET_ALL)
             break
         else:
             print("Invalid choice, please select 1-9")           
+
+
+
+if __name__ == "__main__":
+    main_menu()            

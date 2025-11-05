@@ -1,7 +1,12 @@
 import sqlite3
 
-DB_FILE = "joki_bank.db"
 
+DB_FILE = "bank.db"
+
+
+def create_connection():
+    conn = sqlite3.connect(DB_FILE)
+    return conn
 
 def create_tables():
     with sqlite3.connect(DB_FILE) as conn:
@@ -9,7 +14,7 @@ def create_tables():
         cursor.execute("""
 CREATE TABLE IF NOT EXISTS users ( 
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    first_name TEXT NOT NULL CHECK (first_name <> '') 
+    first_name TEXT NOT NULL CHECK (first_name <> ''), 
     last_name TEXT NOT NULL CHECK (last_name <> ''),
     email TEXT NOT NULL UNIQUE CHECK (email <> ''),
     username TEXT NOT NULL UNIQUE CHECK (username <> ''),
@@ -35,3 +40,83 @@ CREATE TABLE IF NOT EXISTS users (
 
         conn.commit()
         print("✅ Tables checked/created successfully.")
+
+def generate_account_number():
+    import random
+    return ''.join([str(random.randint(0, 9)) for _ in range(10)])
+
+def insert_user(first_name, last_name, email, username, password_hash, pin=None):
+    with create_connection() as conn:
+        cursor = conn.cursor()
+        # Generate a unique account number
+        while True:
+            account_number = generate_account_number()
+            cursor.execute("SELECT id FROM users WHERE account_number = ?", (account_number,))
+            if not cursor.fetchone():
+                break
+                
+        cursor.execute("""
+            INSERT INTO users (first_name, last_name, email, username, password_hash, pin, account_number)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (first_name, last_name, email, username, password_hash, pin, account_number))
+        conn.commit()
+        return cursor.lastrowid
+
+def get_user_by_username(username):
+    with create_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+        return cursor.fetchone()
+
+def get_user_by_email(email):
+    with create_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+        return cursor.fetchone()
+
+def get_user_by_id(user_id):
+    with create_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        return cursor.fetchone()
+
+def update_balance(user_id, new_balance):
+    with create_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET balance = ? WHERE id = ?", (new_balance, user_id))
+        conn.commit()
+
+def record_transaction(user_id, type, amount, details=None):
+    with create_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO transactions (user_id, type, amount, details)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, type, amount, details))
+        conn.commit()
+        return cursor.lastrowid
+
+def get_user_by_account(account_number):
+    with create_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE account_number = ?", (account_number,))
+        return cursor.fetchone()
+
+def get_user_balance(user_id):
+    with create_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT balance FROM users WHERE id = ?", (user_id,))
+        result = cursor.fetchone()
+        return result[0] if result else 0.0
+
+def get_transactions(user_id, limit=5):
+    with create_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT type, amount, timestamp, details
+            FROM transactions 
+            WHERE user_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        """, (user_id, limit))
+        return cursor.fetchall()

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sign Up - JOKI Bank</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg">
+  <div class="iphone-frame">
+    <div class="screen form">
+      <h2>Sign Up</h2>
+      <form method="POST">
+        <input type="text" name="fname" placeholder="First Name" required>
+        <input type="text" name="lname" placeholder="Last Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="password" name="pin" placeholder="4-digit PIN" required maxlength="4">
+        <button type="submit">Create Account</button>
+      </form>
+      <p>Already have an account? <a href="/login">Login</a></p>
+    </div>
+  </div>
+</body>
+</html>

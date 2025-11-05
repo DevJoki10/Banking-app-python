@@ -27,7 +27,13 @@ def validate_email(email: str) -> bool:
 # ===============================
 def generate_account_number(existing_numbers=None) -> str:
     """Generates a unique 10-digit account number."""
+    if existing_numbers is None:
+        existing_numbers = set()
     while True:
         acc_num = str(random.randint(1000000000, 9999999999))
-        if acc_num not in existing_accounts:
+        if acc_num not in existing_numbers:
             return acc_num
+
+def verify_password(stored_hash: str, provided_password: str) -> bool:
+    """Verifies a password against its hash."""
+    return stored_hash == hash_password(provided_password)

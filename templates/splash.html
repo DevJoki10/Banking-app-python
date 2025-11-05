@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome to JOKI Bank</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg">
+  <div class="iphone-frame">
+    <div class="app-container">
+      <div class="logo">
+        <h1>JOKI Bank</h1>
+        <p>Your trusted banking partner</p>
+      </div>
+      <div class="action-buttons">
+        <a href="{{ url_for('login') }}" class="btn">Login</a>
+        <a href="{{ url_for('signup') }}" class="btn btn-outline">Sign Up</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
