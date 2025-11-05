@@ -11,7 +11,7 @@ from getpass import getpass
 from helpers import hash_password, hash_pin, validate_email, generate_account_number
 
 
-DB_FILE = "joki_bank.db"
+DB_FILE = "bank.db"
 create_tables()
 
 def check_tables():
@@ -121,7 +121,7 @@ def register_user():
     with sqlite3.connect(DB_FILE) as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO users (first_name, last_name, email, username, password, pin, account_number, balance)
+            INSERT INTO users (first_name, last_name, email, username, password_hash, pin, account_number, balance)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (first_name, last_name, email, username, hashed_password, hashed_pin, account_number, initial_deposit))
         conn.commit()
@@ -164,9 +164,9 @@ def log_in():
             continue
         break
     hashed_password =  hash_password(password)
-    query = ("SELECT * FROM users WHERE email = ? and password = ?"
+    query = ("SELECT * FROM users WHERE email = ? and password_hash = ?"
              if validate_email(username_or_email)
-             else "SELECT * FROM users WHERE username = ? and password = ?")
+             else "SELECT * FROM users WHERE username = ? and password_hash = ?")
 
     with sqlite3.connect(DB_FILE) as conn:
         cursor = conn.cursor()        
@@ -218,17 +218,18 @@ class BankUser:
 
 
     def deposit(self):
-                try:
-                    amount = float(input("Input amount you wanna deposit: "))
-                    if amount <= 0:
-                        print("Amount must not be less than zero")
-                        return
-                    self.balance += amount
-                    self.update_balance_in_db()
-                    self.record_transaction(amount)
-                    print(f"Deposit successful! New balance: ₦{self.balance:.2f}")  
-                except ValueError:
-                    print("Invalid amount . Please make sure amout entered is a valid number")    
+        try:
+            amount = float(input("Input amount you wanna deposit: "))
+            if amount <= 0:
+                print("Amount must not be less than zero")
+                return
+            self.balance += amount
+            self.update_balance_in_db()
+            self.record_transaction(amount)
+            print(f"Deposit successful! New balance: ₦{self.balance:.2f}")
+            input("Press Enter to continue...")
+        except ValueError:
+            print("Invalid amount . Please make sure amout entered is a valid number")    
     def withdraw(self):
         try:
             amount = float(input("Input amount you wanna withdraw: "))
@@ -247,6 +248,7 @@ class BankUser:
                             VALUES(?,?,?,?)""" ,(self.user_id,"withdrawal", amount))
                 conn.commit()
                 print(f"Withdrawal successful! New balance: ₦{self.balance:.2f}")
+                input("Press Enter to continue...")
         except ValueError: print("Invalid amount . Please make sure amout entered is a valid number")
 
     def transfer(self):
@@ -278,12 +280,10 @@ class BankUser:
                 print("Transfer cancelled.")
                 return
 
-            
             self.balance -= amount
             self.update_balance_in_db()
             self.record_transaction(amount, "transfer_out")
 
-            
             with sqlite3.connect(DB_FILE) as conn:
                 cursor = conn.cursor()
                 cursor.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (amount, receiver[0]))
@@ -295,7 +295,7 @@ class BankUser:
 
             print(f"Transfer successful! ₦{amount:,.2f} sent to {receiver[1]} {receiver[2]}.")
             print(f"New Balance: ₦{self.balance:,.2f}")
-
+            input("Press Enter to continue...")
         except ValueError:
             print("Invalid amount. Please enter a valid number.")                
         
@@ -304,6 +304,7 @@ class BankUser:
 
     def check_balance(self):
         print(f"Your current balance is: ₦{self.balance:.2f}")
+        input("Press Enter to continue...")
 
 
     def view_account_details(self):
@@ -319,6 +320,7 @@ class BankUser:
         print(f"Account Number: {details[0]}")
         print(f"Current Balance: ₦{self.balance:,.2f}")
         print("=====================================================\n")
+        input("Press Enter to continue...")
 
 
 
@@ -332,7 +334,6 @@ class BankUser:
                 ORDER BY timestamp DESC
             """, (self.user_id,))
             transactions = cursor.fetchall()
-            
         print("=======================================================================")
         print(f"      TRANSACTION HISTORY for {self.first_name} {self.last_name}")    
         print("=======================================================================")
@@ -340,6 +341,7 @@ class BankUser:
         if not transactions:
             print("You have not made any transaction. Your transaction history is empty")
             print("=======================================================================")
+            input("Press Enter to continue...")
             return
         print(f"{'DATE':<22} {'TYPE':<12} {'AMOUNT (₦)':>12}")
         print("=======================================================================")
@@ -349,67 +351,69 @@ class BankUser:
         print("=======================================================================")
         print(f"Current balance. : ₦{self.balance:,.2f}")
         print("=======================================================================")
+        input("Press Enter to continue...")
     
 def main_menu ():
     current_user = None
     while True:
-        print ("""
+        if not current_user:
+            print ("""
  ==============================
     JOKI TERMINAL BANK
- ==============================                 
+ ==============================
 1. Register
 2. Log In
-3. Deposit
-4. Withdrawal
-5. Balance Inquiry
-6. Transaction History
-7. Transfer
-8.Account details            
-9. Exit                                                                             
-""") 
-        choice = input("Select an option (1-9): ").strip()
-
-        if choice == "1":
-            register_user()
-        elif choice == "2":
-           current_user = log_in()
-        elif choice == "3":
-            if current_user:
-                current_user.deposit()
+9. Exit
+""")
+            choice = input("Select an option (1-2, 9): ").strip()
+            if choice == "1":
+                register_user()
+            elif choice == "2":
+                user = log_in()
+                if user:
+                    current_user = user
+            elif choice == "9":
+                print(Fore.CYAN + "Thank you for using JOKI Terminal Bank. Goodbye!" + Style.RESET_ALL)
+                break
             else:
-                print("You must log in first.")
-        elif choice == "4":
-            if current_user: 
-                current_user.withdraw()
-            else:
-                print("You must log in first.")
-        elif choice == "5":
-            if current_user: 
-                current_user.check_balance()
-            else:
-                print("You must log in first.")                
-        elif choice == "6":
-            if current_user:
-                current_user.view_transaction_history()
-            else:
-                print("You must log in first.")
-        elif choice == "7":
-            if current_user:
-                current_user.transfer()
-            else:
-                print("You must log in first.")
-        elif choice == "8":
-            if current_user:
-                current_user.view_account_details()
-            else:
-             print("You must log in first.")        
-        elif choice == "9":
-            print(Fore.CYAN + "Thank you for using JOKI Terminal Bank. Goodbye!" + Style.RESET_ALL)
-            break
+                print("Invalid choice, please select 1, 2, or 9")
         else:
-            print("Invalid choice, please select 1-9")           
-
+            print(f"\nWelcome, {current_user.first_name} {current_user.last_name}!\n")
+            print("""
+ ==============================
+    JOKI TERMINAL BANK
+ ==============================
+1. Deposit
+2. Withdrawal
+3. Balance Inquiry
+4. Transaction History
+5. Transfer
+6. Account details
+7. Log Out
+8. Exit
+""")
+            choice = input("Select an option (1-8): ").strip()
+            if choice == "1":
+                current_user.deposit()
+            elif choice == "2":
+                current_user.withdraw()
+            elif choice == "3":
+                current_user.check_balance()
+            elif choice == "4":
+                current_user.view_transaction_history()
+            elif choice == "5":
+                current_user.transfer()
+            elif choice == "6":
+                current_user.view_account_details()
+            elif choice == "7":
+                print("You have been logged out.")
+                current_user = None
+            elif choice == "8":
+                print(Fore.CYAN + "Thank you for using JOKI Terminal Bank. Goodbye!" + Style.RESET_ALL)
+                break
+            else:
+                print("Invalid choice, please select 1-8")
 
 
 if __name__ == "__main__":
-    main_menu()            
+    main_menu()
